@@ -6,11 +6,19 @@ import org.junit.jupiter.api.Test;
 
 class InvalidBookingExceptionTest {
 
+  // @Test
+  // void givenInvalidBookingException_whenGetMessage_thenExpectedValueReturned() {
+  //   final InvalidBookingException invalidBookingException = new InvalidBookingException(
+  //       "A useful message");
+  //   assertEquals("A useful message", invalidBookingException.getMessage());
+  // }
+
   @Test
-  void givenInvalidBookingException_whenGetMessage_thenExpectedValueReturned() {
-    final InvalidBookingException invalidBookingException = new InvalidBookingException(
-        "A useful message");
-    assertEquals("A useful message", invalidBookingException.getMessage());
+  void shouldReturnExpectedReason() {
+    final InvalidBookingException invalidBookingException =
+        new InvalidBookingException(InvalidBookingException.Reason.EMPTY_REQUEST);
+
+    assertEquals(InvalidBookingException.Reason.EMPTY_REQUEST, invalidBookingException.getReason());
   }
 
 }
