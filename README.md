@@ -43,7 +43,27 @@ The following rules are enforced:
 
 ---
 
-## Validation Rules
+## Design Approach
+
+### 1. Service Layer
+
+The main business logic is implemented in:
+
+* `CinemaTicketsServiceImpl`
+
+This keeps the solution focused on the required service behaviour without adding unnecessary layers.
+
+---
+
+### 2. Validation Strategy
+
+Validation is split into:
+
+* Input validation
+* Ticket request validation
+* Business rule validation
+
+This makes the code easier to read, maintain, and test.
 
 The service rejects invalid bookings where:
 
@@ -60,11 +80,34 @@ Invalid requests throw an `InvalidBookingException`.
 
 ---
 
-## Design Approach
+### 3. Business Rule Enforcement
 
-### Service Layer
+The service aggregates all ticket requests before applying business rules.
 
-The main business logic is implemented in:
+This allows multiple ticket requests of the same type to be handled correctly.
+
+For example:
+
+* `ADULT x 1`
+* `ADULT x 2`
+* `CHILD x 1`
+
+are treated as:
+
+* `ADULT x 3`
+* `CHILD x 1`
+
+---
+
+### 4. Payment Calculation
+
+Payment is calculated using the fixed ticket prices:
+
+* Adult: £25
+* Child: £15
+* Infant: £0
+
+Formula:
 
 ```text
-src/main/java/uk/gov/dwp/engineering/recruitment/CinemaTicketsServiceImpl.java
+total amount = (adult count × 25) + (child count × 15)
