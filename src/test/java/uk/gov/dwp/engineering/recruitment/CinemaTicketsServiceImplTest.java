@@ -39,113 +39,94 @@ class CinemaTicketsServiceImplTest {
 
         @Test
         void shouldPurchaseAdultTicketsSuccessfully() {
-            Long accountId = 1L;
 
-            ticketService.purchaseTickets(accountId, request(TicketType.ADULT, 2));
+            assertSuccessfulPurchase(
+                    1L,
+                    BigDecimal.valueOf(50),
+                    2L,
+                    request(TicketType.ADULT, 2));
 
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(50));
-            verify(seatReservationService).reserveSeats(accountId, 2L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldPurchaseAdultAndChildTicketsSuccessfully() {
-            Long accountId = 7L;
 
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    2L,
+                    BigDecimal.valueOf(40),
+                    2L,
                     request(TicketType.ADULT, 1),
                     request(TicketType.CHILD, 1));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(40));
-            verify(seatReservationService).reserveSeats(accountId, 2L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldPurchaseAdultChildInfantTicketsSuccessfully() {
-            Long accountId = 1L;
 
-            ticketService.purchaseTickets(
-                    accountId,
-                    request(TicketType.ADULT, 2), request(TicketType.CHILD, 2), request(TicketType.INFANT, 1));
+            assertSuccessfulPurchase(
+                    3L,
+                    BigDecimal.valueOf(80),
+                    4L,
+                    request(TicketType.ADULT, 2),
+                    request(TicketType.CHILD, 2),
+                    request(TicketType.INFANT, 1));
 
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(80));
-            verify(seatReservationService).reserveSeats(accountId, 4L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldAllowInfantsEqualToAdults() { // boundary case
-            Long accountId = 6L;
 
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    4L,
+                    BigDecimal.valueOf(50),
+                    2L,
                     request(TicketType.ADULT, 2),
                     request(TicketType.INFANT, 2));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(50));
-            verify(seatReservationService).reserveSeats(accountId, 2L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldAggregateMultipleRequestsOfSameTicketType() {
-            Long accountId = 5L;
 
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    5L,
+                    BigDecimal.valueOf(90),
+                    4L,
                     request(TicketType.ADULT, 1),
                     request(TicketType.ADULT, 2),
                     request(TicketType.CHILD, 1));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(90));
-            verify(seatReservationService).reserveSeats(accountId, 4L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldCalculatePaymentAndSeatsCorrectlyForMixedTickets() {
-            Long accountId = 2L;
 
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    6L,
+                    BigDecimal.valueOf(95),
+                    5L,
                     request(TicketType.ADULT, 2),
                     request(TicketType.CHILD, 3),
                     request(TicketType.INFANT, 1));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(95));
-            verify(seatReservationService).reserveSeats(accountId, 5L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldNotAllocateSeatsForInfants() {
-            Long accountId = 3L;
-
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    7L,
+                    BigDecimal.valueOf(50),
+                    2L,
                     request(TicketType.ADULT, 2),
                     request(TicketType.INFANT, 2));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(50));
-            verify(seatReservationService).reserveSeats(accountId, 2L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
         @Test
         void shouldAllowExactlyTwentyFiveTickets() {
-            Long accountId = 4L;
 
-            ticketService.purchaseTickets(
-                    accountId,
+            assertSuccessfulPurchase(
+                    8L,
+                    BigDecimal.valueOf(400),
+                    20L,
                     request(TicketType.ADULT, 10),
                     request(TicketType.CHILD, 10),
                     request(TicketType.INFANT, 5));
-
-            verify(ticketPaymentService).debitAccount(accountId, BigDecimal.valueOf(400));
-            verify(seatReservationService).reserveSeats(accountId, 20L);
-            verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
         }
 
     }
@@ -296,6 +277,21 @@ class CinemaTicketsServiceImplTest {
 
     private TicketRequest request(TicketType type, int quantity) {
         return new TicketRequest(type, quantity);
+    }
+
+    // Helper
+    private void assertSuccessfulPurchase(
+            final Long accountId,
+            final BigDecimal expectedAmount,
+            final Long expectedSeats,
+            final TicketRequest... ticketRequests) {
+
+        final String result = ticketService.purchaseTickets(accountId, ticketRequests);
+
+        assertEquals("Ticket purchase completed successfully", result);
+        verify(ticketPaymentService).debitAccount(accountId, expectedAmount);
+        verify(seatReservationService).reserveSeats(accountId, expectedSeats);
+        verifyNoMoreInteractions(ticketPaymentService, seatReservationService);
     }
 
     private void assertInvalidPurchase(InvalidBookingException.Reason expectedReason, Executable action) {

@@ -27,6 +27,8 @@ public class CinemaTicketsServiceImpl implements CinemaTicketsService {
   private static final int CHILD_PRICE = 15;
   private static final int MAX_TICKETS = 25;
 
+  private static final String SUCCESS_MESSAGE = "Ticket purchase completed successfully";
+
   @Override
   public String purchaseTickets(final Long accountId, final TicketRequest... ticketRequests)
       throws InvalidBookingException {
@@ -48,7 +50,7 @@ public class CinemaTicketsServiceImpl implements CinemaTicketsService {
     // call third-party services
     paymentService.debitAccount(accountId, totalAmount);
     seatReservationService.reserveSeats(accountId, totalSeats);
-    return null;
+    return SUCCESS_MESSAGE;
   }
 
   // helper methods
